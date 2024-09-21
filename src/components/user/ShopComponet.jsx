@@ -2,14 +2,19 @@ import React, { useEffect, useState } from "react";
 import { PiLineVerticalThin } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import SportsFitBanner from "./SportsFitBanner";
+import Pagination from "../common/PaginationUserSide";
 
 const ShopProductGrid = ({ data }) => {
 	const [listData, setListData] = useState([]);
+	const [filteredData, setFilteredData] = useState([]);
 	const [selectedBrands, setSelectedBrands] = useState([]);
 	const [selectedPriceRanges, setSelectedPriceRanges] = useState([]);
 	const [sortOption, setSortOption] = useState("Recommended");
 
 	const navigate = useNavigate();
+
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 6;
 
 	const handleProductDetails = (productId) => {
 		navigate(`/productDetials/${productId}`);
@@ -22,16 +27,16 @@ const ShopProductGrid = ({ data }) => {
 	}, [data]);
 
 	useEffect(() => {
-		let filteredData = [...data];
+		let filteredList = [...listData];
 
 		if (selectedBrands.length > 0) {
-			filteredData = filteredData.filter((product) =>
+			filteredList = filteredList.filter((product) =>
 				selectedBrands.includes(product?.brand?.brandName)
 			);
 		}
 
 		if (selectedPriceRanges.length > 0) {
-			filteredData = filteredData.filter((product) =>
+			filteredList = filteredList.filter((product) =>
 				selectedPriceRanges.some(
 					(range) =>
 						product.regularPrice >= range.start &&
@@ -42,28 +47,29 @@ const ShopProductGrid = ({ data }) => {
 
 		switch (sortOption) {
 			case "LowToHigh":
-				filteredData.sort((a, b) => a.regularPrice - b.regularPrice);
+				filteredList.sort((a, b) => a.regularPrice - b.regularPrice);
 				break;
 			case "HighToLow":
-				filteredData.sort((a, b) => b.regularPrice - a.regularPrice);
+				filteredList.sort((a, b) => b.regularPrice - a.regularPrice);
 				break;
 			case "NewArrivals":
-				filteredData.sort(
-					(a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+				filteredList.sort(
+					(a, b) => new Date(b.createdAt) - new Date(a.createdAt)
 				);
 				break;
 			case "AZ":
-				filteredData.sort((a, b) => a.productName.localeCompare(b.productName));
+				filteredList.sort((a, b) => a.productName.localeCompare(b.productName));
 				break;
 			case "ZA":
-				filteredData.sort((a, b) => b.productName.localeCompare(a.productName));
+				filteredList.sort((a, b) => b.productName.localeCompare(a.productName));
 				break;
 			default:
 				break;
 		}
 
-		setListData(filteredData);
-	}, [selectedBrands, selectedPriceRanges, sortOption, data]);
+		setFilteredData(filteredList);
+		setCurrentPage(1);
+	}, [selectedBrands, selectedPriceRanges, sortOption, listData]);
 
 	const handleCheckBrand = (brand, checked) => {
 		if (checked) {
@@ -90,13 +96,16 @@ const ShopProductGrid = ({ data }) => {
 		}
 	};
 
+	const startIndex = (currentPage - 1) * itemsPerPage;
+	const endIndex = startIndex + itemsPerPage;
+	const currentItems = filteredData.slice(startIndex, endIndex);
+
 	return (
 		<>
 			<div className="mb-16">
 				<SportsFitBanner image={"/Shop.png"} />
 			</div>
 			<div className="flex flex-col md:flex-row">
-				{/* Filter Section */}
 				<div className="w-full md:w-1/4 bg-white p-6 shadow-lg rounded-lg">
 					<h2 className="text-lg font-semibold mb-6 border-b pb-2">Filters</h2>
 					<div className="mb-6">
@@ -141,7 +150,6 @@ const ShopProductGrid = ({ data }) => {
 					</div>
 				</div>
 
-				{/* Product Grid */}
 				<div className="w-full md:w-3/4 p-6">
 					<div className="flex justify-between items-center mb-6">
 						<h2 className="text-2xl font-semibold">Products</h2>
@@ -158,7 +166,7 @@ const ShopProductGrid = ({ data }) => {
 						</select>
 					</div>
 					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-6">
-						{listData.map((product, index) => (
+						{currentItems.map((product, index) => (
 							<div key={index}>
 								<div
 									className="bg-white rounded-lg p-4 flex flex-col justify-center items-center cursor-pointer shadow-lg hover:shadow-xl transition-shadow duration-300 mb-6 transform hover:scale-105"
@@ -201,22 +209,19 @@ const ShopProductGrid = ({ data }) => {
 										)}
 
 										<div className="flex items-center gap-1">
-											<span className="text-yellow-400 text-xs sm:text-sm font-medium">
-												4.7
-											</span>
-											<svg
-												className="w-4 h-4 text-yellow-400"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-											>
-												<path d="M10 15l-5.878 3.09 1.122-6.545L.366 7.91l6.564-.954L10 .25l3.07 6.705 6.564.954-4.878 4.635L15.878 18z" />
-											</svg>
+											<p className="text-sm font-medium">Best Price</p>
 										</div>
 									</div>
 								</div>
 							</div>
 						))}
 					</div>
+					<Pagination
+						currentPage={currentPage}
+						totalItems={filteredData.length}
+						itemsPerPage={itemsPerPage}
+						onPageChange={(page) => setCurrentPage(page)}
+					/>
 				</div>
 			</div>
 		</>
