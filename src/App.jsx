@@ -105,7 +105,7 @@ function App() {
 						<Route path="bestSelling" element={<BestSelling />} />
 					</Route>
 				</Route>
-				<Route Component={NotFoundPage} />
+				<Route path="*" element={<NotFoundPage />} />
 			</Routes>
 		</>
 	);
